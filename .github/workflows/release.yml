@@ -89,10 +89,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Print Node and npm versions
+        run: |
+          node --version
+          npm --version
 
       - name: Ensure npm package stays shell-only
         run: rm -rf vendor
@@ -101,4 +106,4 @@ jobs:
         run: npm pack --dry-run
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --provenance --access public
