@@ -1,0 +1,37 @@
+{
+  "name": "@vtrixai/vtrix-cli",
+  "version": "0.1.14",
+  "description": "npm installer wrapper for the vtrix CLI binary",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "vtrix": "./scripts/vtrix.js",
+    "vtrix-skills": "./scripts/vtrix-skills.js"
+  },
+  "files": [
+    "scripts/postinstall.js",
+    "scripts/vtrix.js",
+    "scripts/vtrix-skills.js",
+    "vendor"
+  ],
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "tar": "^7.4.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VtrixAI/vtrix-cli.git"
+  },
+  "vtrix": {
+    "projectName": "vtrix",
+    "releaseBaseUrlTemplate": "https://github.com/VtrixAI/vtrix-cli/releases/download/v{version}"
+  }
+}

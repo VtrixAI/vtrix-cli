@@ -1,0 +1,58 @@
+version: 2
+
+project_name: vtrix
+dist: dist
+
+builds:
+  - id: vtrix
+    main: .
+    binary: vtrix
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/VtrixAI/vtrix-cli/internal/buildinfo.Version={{ .Version }}
+        -X github.com/VtrixAI/vtrix-cli/internal/auth.BaseURL={{ .Env.VTRIX_BASE_URL }}
+        -X github.com/VtrixAI/vtrix-cli/internal/models.BaseURL={{ .Env.VTRIX_MODELS_URL }}
+        -X github.com/VtrixAI/vtrix-cli/internal/generation.BaseURL={{ .Env.VTRIX_GENERATION_URL }}
+        -X github.com/VtrixAI/vtrix-cli/internal/skillhub.BaseURL={{ .Env.VTRIX_SKILLHUB_URL }}
+
+archives:
+  - id: default
+    ids:
+      - vtrix
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: "SHA256SUMS"
+
+release:
+  github:
+    owner: VtrixAI
+    name: vtrix-cli
+
+source:
+  enabled: false
+
+snapshot:
+  version_template: "{{ .Version }}-next"
+
+changelog:
+  disable: true
