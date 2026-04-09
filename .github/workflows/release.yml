@@ -84,9 +84,16 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -99,8 +106,20 @@ jobs:
           node --version
           npm --version
 
-      - name: Ensure npm package stays shell-only
-        run: rm -rf vendor
+      - name: Resolve release endpoints
+        env:
+          INPUT_VTRIX_BASE_URL: ${{ vars.VTRIX_BASE_URL }}
+          INPUT_VTRIX_MODELS_URL: ${{ vars.VTRIX_MODELS_URL }}
+          INPUT_VTRIX_GENERATION_URL: ${{ vars.VTRIX_GENERATION_URL }}
+          INPUT_VTRIX_SKILLHUB_URL: ${{ vars.VTRIX_SKILLHUB_URL }}
+        run: |
+          echo "VTRIX_BASE_URL=${INPUT_VTRIX_BASE_URL:-https://vtrix.ai}" >> "$GITHUB_ENV"
+          echo "VTRIX_MODELS_URL=${INPUT_VTRIX_MODELS_URL:-https://seacloud-cloud-model-spec.api.seaart.ai}" >> "$GITHUB_ENV"
+          echo "VTRIX_GENERATION_URL=${INPUT_VTRIX_GENERATION_URL:-https://vtrix.ai}" >> "$GITHUB_ENV"
+          echo "VTRIX_SKILLHUB_URL=${INPUT_VTRIX_SKILLHUB_URL:-https://seacloud-skill-hub.api.seaart.ai/api/v1}" >> "$GITHUB_ENV"
+
+      - name: Build bundled npm binaries
+        run: ./scripts/build.sh && npm run prepare:npm-bundles
 
       - name: Preview npm package contents
         run: npm pack --dry-run

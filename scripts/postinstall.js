@@ -10,6 +10,10 @@ const tar = require("tar");
 const rootDir = path.resolve(__dirname, "..");
 const pkg = require(path.join(rootDir, "package.json"));
 
+const bundledAssetsDir = path.join(
+  rootDir,
+  pkg.vtrix?.bundledAssetsDir || "npm-bundles"
+);
 const vendorDir = path.join(rootDir, "vendor");
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vtrix-npm-"));
 
@@ -29,13 +33,11 @@ async function main() {
     }
 
     const target = resolveTarget();
-    const releaseBaseUrl = resolveReleaseBaseUrl();
+    const releaseSources = resolveReleaseSources();
     const projectName = pkg.vtrix?.projectName || "vtrix";
     const version = pkg.version;
 
     const assetName = `${projectName}_${version}_${target.os}_${target.arch}.${target.ext}`;
-    const checksumUrl = `${releaseBaseUrl}/SHA256SUMS`;
-    const assetUrl = `${releaseBaseUrl}/${assetName}`;
     const archivePath = path.join(tmpDir, assetName);
     const extractDir = path.join(tmpDir, "extract");
 
@@ -45,17 +47,8 @@ async function main() {
     fs.mkdirSync(extractDir, { recursive: true });
 
     log(`downloading ${assetName}`);
-    const checksumText = await fetchText(checksumUrl);
-    const expectedSha = parseChecksum(checksumText, assetName);
-    if (!expectedSha) {
-      throw new Error(`checksum for ${assetName} not found in SHA256SUMS`);
-    }
-
-    await downloadFile(assetUrl, archivePath);
-    const actualSha = sha256File(archivePath);
-    if (actualSha !== expectedSha) {
-      throw new Error(`checksum mismatch for ${assetName}`);
-    }
+    const expectedSha = await resolveExpectedSha(releaseSources, assetName);
+    await materializeArchive(releaseSources, assetName, archivePath, expectedSha);
 
     await extractArchive(archivePath, extractDir, target.ext);
     const extractedBinary = findFileRecursive(extractDir, target.bin);
@@ -85,14 +78,30 @@ function resolveTarget() {
 }
 
 function resolveReleaseBaseUrl() {
-  const fromEnv = process.env.VTRIX_RELEASE_BASE_URL;
+  return resolveBaseUrl(
+    process.env.VTRIX_RELEASE_BASE_URL,
+    pkg.vtrix?.releaseBaseUrlTemplate,
+    "missing vtrix.releaseBaseUrlTemplate in package.json"
+  );
+}
+
+function resolveReleaseMirrorBaseUrl() {
+  return resolveBaseUrl(
+    process.env.VTRIX_RELEASE_MIRROR_BASE_URL,
+    pkg.vtrix?.releaseMirrorBaseUrlTemplate || null,
+    null
+  );
+}
+
+function resolveBaseUrl(fromEnv, template, missingMessage) {
   if (fromEnv) {
     return stripTrailingSlash(fromEnv);
   }
-
-  const template = pkg.vtrix?.releaseBaseUrlTemplate;
   if (!template) {
-    throw new Error("missing vtrix.releaseBaseUrlTemplate in package.json");
+    if (missingMessage) {
+      throw new Error(missingMessage);
+    }
+    return null;
   }
   return stripTrailingSlash(
     template
@@ -101,25 +110,112 @@ function resolveReleaseBaseUrl() {
   );
 }
 
+function resolveReleaseSources() {
+  const sources = [
+    { name: "GitHub Release", type: "remote", baseUrl: resolveReleaseBaseUrl() }
+  ];
+  const mirrorBaseUrl = resolveReleaseMirrorBaseUrl();
+
+  if (mirrorBaseUrl && mirrorBaseUrl !== sources[0].baseUrl) {
+    sources.push({ name: "Release mirror", type: "remote", baseUrl: mirrorBaseUrl });
+  }
+
+  if (fs.existsSync(bundledAssetsDir)) {
+    sources.push({ name: "bundled npm package", type: "local", basePath: bundledAssetsDir });
+  }
+
+  return sources;
+}
+
+function getChecksumLocation(source) {
+  return source.type === "local"
+    ? path.join(source.basePath, "SHA256SUMS")
+    : `${source.baseUrl}/SHA256SUMS`;
+}
+
+function getAssetLocation(source, assetName) {
+  return source.type === "local"
+    ? path.join(source.basePath, assetName)
+    : `${source.baseUrl}/${assetName}`;
+}
+
+async function resolveExpectedSha(sources, assetName) {
+  const errors = [];
+
+  for (const source of sources) {
+    const checksumLocation = getChecksumLocation(source);
+    try {
+      const checksumText = source.type === "local"
+        ? fs.readFileSync(checksumLocation, "utf8")
+        : await fetchText(checksumLocation);
+      const expectedSha = parseChecksum(checksumText, assetName);
+      if (!expectedSha) {
+        throw new Error(`checksum for ${assetName} not found in SHA256SUMS`);
+      }
+      log(`using checksums from ${source.name}`);
+      return expectedSha;
+    } catch (err) {
+      errors.push(`${source.name}: ${err.message}`);
+    }
+  }
+
+  throw new Error(`failed to resolve checksums for ${assetName}\n${errors.join("\n")}`);
+}
+
+async function materializeArchive(sources, assetName, archivePath, expectedSha) {
+  const errors = [];
+
+  for (const source of sources) {
+    const assetLocation = getAssetLocation(source, assetName);
+    try {
+      log(`trying ${source.name}: ${assetLocation}`);
+      if (source.type === "local") {
+        fs.copyFileSync(assetLocation, archivePath);
+      } else {
+        await downloadFile(assetLocation, archivePath);
+      }
+      const actualSha = sha256File(archivePath);
+      if (actualSha !== expectedSha) {
+        throw new Error(`checksum mismatch for ${assetName}`);
+      }
+      log(`downloaded from ${source.name}`);
+      return;
+    } catch (err) {
+      fs.rmSync(archivePath, { force: true });
+      errors.push(`${source.name}: ${err.message}`);
+    }
+  }
+
+  throw new Error(`failed to obtain ${assetName}\n${errors.join("\n")}`);
+}
+
 function stripTrailingSlash(value) {
   return value.replace(/\/+$/, "");
 }
 
 async function fetchText(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`failed to download ${url}: HTTP ${response.status}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.text();
+  } catch (err) {
+    throw new Error(`failed to download ${url}: ${err.message}`);
   }
-  return response.text();
 }
 
 async function downloadFile(url, destination) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`failed to download ${url}: HTTP ${response.status}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.writeFileSync(destination, buffer);
+  } catch (err) {
+    throw new Error(`failed to download ${url}: ${err.message}`);
   }
-  const buffer = Buffer.from(await response.arrayBuffer());
-  fs.writeFileSync(destination, buffer);
 }
 
 function parseChecksum(content, fileName) {
@@ -181,5 +277,8 @@ function log(message) {
 
 main().catch((err) => {
   console.error(`[vtrix installer] ${err.message}`);
+  console.error(
+    "[vtrix installer] hint: GitHub download failed; package will fall back to bundled archives when available."
+  );
   process.exit(1);
 });

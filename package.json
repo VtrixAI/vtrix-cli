@@ -1,6 +1,6 @@
 {
   "name": "@vtrixai/vtrix-cli",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "npm installer wrapper for the vtrix CLI binary",
   "license": "MIT",
   "publishConfig": {
@@ -11,12 +11,14 @@
     "vtrix-skills": "./scripts/vtrix-skills.js"
   },
   "files": [
+    "npm-bundles",
     "scripts/postinstall.js",
     "scripts/vtrix.js",
     "scripts/vtrix-skills.js",
     "vendor"
   ],
   "scripts": {
+    "prepare:npm-bundles": "node ./scripts/prepare-npm-bundles.js",
     "postinstall": "node ./scripts/postinstall.js"
   },
   "engines": {
@@ -31,6 +33,7 @@
     "url": "https://github.com/VtrixAI/vtrix-cli.git"
   },
   "vtrix": {
+    "bundledAssetsDir": "npm-bundles",
     "projectName": "vtrix",
     "releaseBaseUrlTemplate": "https://github.com/VtrixAI/vtrix-cli/releases/download/v{version}"
   }
