@@ -1,9 +1,9 @@
 dist/
 dist-dev/
 
-vtrix
-vtrix.exe
-vtrix-*
+/vtrix
+/vtrix.exe
+/vtrix-*
 
 .DS_Store
 
