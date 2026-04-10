@@ -1,6 +1,6 @@
 <div align="center">
   <p>
-    <img src="./assets/vtrix-cli-image.png" alt="Vtrix CLI banner">
+    <img src="./assets/vtrix-cli-image-zh.png" alt="Vtrix CLI banner">
   </p>
   <h1>Vtrix CLI</h1>
   <h3>Vtrix AI 平台的官方命令行界面</h3>

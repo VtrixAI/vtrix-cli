@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+message_file="${1:-}"
+
+if [[ -z "$message_file" || ! -f "$message_file" ]]; then
+  echo "ERROR: commit message file is missing."
+  exit 1
+fi
+
+message="$(sed '/^[[:space:]]*#/d' "$message_file" | tr -d '\r')"
+
+if [[ -z "${message//[[:space:]]/}" ]]; then
+  exit 0
+fi
+
+subject="$(printf '%s\n' "$message" | awk 'NF { print; exit }')"
+normalized_subject="$subject"
+
+if ! printf '%s' "$subject" | LC_ALL=C grep -Eq '[A-Za-z]'; then
+  echo "ERROR: commit message subject must contain English letters."
+  echo "Example: feat: add vtrix website link to README"
+  exit 1
+fi
+
+if ! printf '%s' "$message" | LC_ALL=C grep -Eq '^[[:space:][:print:]]*$'; then
+  echo "ERROR: commit message must be written in English."
+  echo "Example: feat: add vtrix website link to README"
+  exit 1
+fi
+
+if printf '%s' "$subject" | LC_ALL=C grep -Eq '^Merge '; then
+  exit 0
+fi
+
+if printf '%s' "$normalized_subject" | LC_ALL=C grep -Eq '^(fixup|squash)! '; then
+  normalized_subject="${normalized_subject#*! }"
+fi
+
+if ! printf '%s' "$normalized_subject" | LC_ALL=C grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([a-z0-9._/-]+\))?(!)?: [a-z].+'; then
+  echo "ERROR: commit message must follow Conventional Commits."
+  echo "Allowed types: feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert"
+  echo "Examples:"
+  echo "  feat: add website link to README"
+  echo "  fix(auth): handle expired token refresh"
+  echo "  docs(readme): update installation instructions"
+  exit 1
+fi
