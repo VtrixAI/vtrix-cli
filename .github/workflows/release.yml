@@ -68,7 +68,7 @@ jobs:
           INPUT_VTRIX_SKILLHUB_URL: ${{ vars.VTRIX_SKILLHUB_URL }}
         run: |
           echo "VTRIX_BASE_URL=${INPUT_VTRIX_BASE_URL:-https://vtrix.ai}" >> "$GITHUB_ENV"
-          echo "VTRIX_MODELS_URL=${INPUT_VTRIX_MODELS_URL:-https://seacloud-cloud-model-spec.api.seaart.ai}" >> "$GITHUB_ENV"
+          echo "VTRIX_MODELS_URL=${INPUT_VTRIX_MODELS_URL:-https://cloud-model-spec.vtrix.ai}" >> "$GITHUB_ENV"
           echo "VTRIX_GENERATION_URL=${INPUT_VTRIX_GENERATION_URL:-https://vtrix.ai}" >> "$GITHUB_ENV"
           echo "VTRIX_SKILLHUB_URL=${INPUT_VTRIX_SKILLHUB_URL:-https://skill-hub.vtrix.ai/api/v1}" >> "$GITHUB_ENV"
 
@@ -114,7 +114,7 @@ jobs:
           INPUT_VTRIX_SKILLHUB_URL: ${{ vars.VTRIX_SKILLHUB_URL }}
         run: |
           echo "VTRIX_BASE_URL=${INPUT_VTRIX_BASE_URL:-https://vtrix.ai}" >> "$GITHUB_ENV"
-          echo "VTRIX_MODELS_URL=${INPUT_VTRIX_MODELS_URL:-https://seacloud-cloud-model-spec.api.seaart.ai}" >> "$GITHUB_ENV"
+          echo "VTRIX_MODELS_URL=${INPUT_VTRIX_MODELS_URL:-https://cloud-model-spec.vtrix.ai}" >> "$GITHUB_ENV"
           echo "VTRIX_GENERATION_URL=${INPUT_VTRIX_GENERATION_URL:-https://vtrix.ai}" >> "$GITHUB_ENV"
           echo "VTRIX_SKILLHUB_URL=${INPUT_VTRIX_SKILLHUB_URL:-https://skill-hub.vtrix.ai/api/v1}" >> "$GITHUB_ENV"
 

@@ -21,7 +21,7 @@ import (
 // Or at runtime via the VTRIX_BASE_URL environment variable.
 var BaseURL = ""
 
-const AppID = "@seacloud/web"
+const AppID = "@vtrix/cli"
 
 type Client struct {
 	httpClient *http.Client

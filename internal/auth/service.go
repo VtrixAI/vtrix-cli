@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/VtrixAI/vtrix-cli/internal/clierrors"
+	"github.com/google/uuid"
 )
 
-const clientID = "seacloud-cli"
+const clientID = "vtrix-cli"
 
 // generateKeyPair generates an ephemeral Ed25519 key pair.
 // Returns (publicKeyBase64URL, privateKey, error).

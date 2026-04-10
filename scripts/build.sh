@@ -9,7 +9,7 @@ DIST="dist"
 
 # Production URLs — use online defaults, allow override via env when needed.
 VTRIX_BASE_URL="${VTRIX_BASE_URL:-https://vtrix.ai}"
-VTRIX_MODELS_URL="${VTRIX_MODELS_URL:-https://seacloud-cloud-model-spec.api.seaart.ai}"
+VTRIX_MODELS_URL="${VTRIX_MODELS_URL:-https://cloud-model-spec.vtrix.ai}"
 VTRIX_GENERATION_URL="${VTRIX_GENERATION_URL:-$VTRIX_BASE_URL}"
 VTRIX_SKILLHUB_URL="${VTRIX_SKILLHUB_URL:-https://skill-hub.vtrix.ai/api/v1}"
 

@@ -4,7 +4,7 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 PREFIX ?= /usr/local
 
 VTRIX_BASE_URL ?= https://vtrix.ai
-VTRIX_MODELS_URL ?= https://seacloud-cloud-model-spec.api.seaart.ai
+VTRIX_MODELS_URL ?= https://cloud-model-spec.vtrix.ai
 VTRIX_GENERATION_URL ?= $(VTRIX_BASE_URL)
 VTRIX_SKILLHUB_URL ?= https://skill-hub.vtrix.ai/api/v1
 
