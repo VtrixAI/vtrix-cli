@@ -1,6 +1,6 @@
 {
   "name": "@vtrixai/vtrix-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "npm installer wrapper for the vtrix CLI binary",
   "license": "MIT",
   "publishConfig": {
