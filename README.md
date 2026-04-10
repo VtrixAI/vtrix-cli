@@ -129,6 +129,7 @@ vtrix skills config --show
 vtrix auth login
 vtrix auth status
 vtrix auth logout
+vtrix auth set-key <api-key>
 ```
 
 ### `vtrix models`

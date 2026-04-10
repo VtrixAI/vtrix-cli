@@ -98,6 +98,31 @@ var authLogoutCmd = &cobra.Command{
 	},
 }
 
+var authSetKeyCmd = &cobra.Command{
+	Use:   "set-key <api-key>",
+	Short: "Set or replace the vtrix API key",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		newKey := args[0]
+		if newKey == "" {
+			return fmt.Errorf("API key cannot be empty")
+		}
+
+		cfg, err := config.Load()
+		if err != nil {
+			cfg = &config.Config{}
+		}
+
+		cfg.APIKey = newKey
+		if err := config.Save(cfg); err != nil {
+			return clierrors.ErrSaveConfig(err)
+		}
+
+		fmt.Println("API key updated.")
+		return nil
+	},
+}
+
 func openBrowser(url string) error {
 	var cmd string
 	var args []string
@@ -123,4 +148,5 @@ func init() {
 	authCmd.AddCommand(authLoginCmd)
 	authCmd.AddCommand(authStatusCmd)
 	authCmd.AddCommand(authLogoutCmd)
+	authCmd.AddCommand(authSetKeyCmd)
 }
