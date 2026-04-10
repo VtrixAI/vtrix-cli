@@ -62,7 +62,7 @@ Exit codes:
 		fmt.Printf("Task:   %s\n", task.ID)
 		fmt.Printf("Status: %s\n", task.Status)
 		if task.Status == "failed" && task.Error != nil {
-			fmt.Printf("Error:  %s\n", *task.Error)
+			fmt.Printf("Error:  %s\n", task.Error.Message)
 		}
 		for _, u := range task.URLs() {
 			fmt.Printf("URL:    %s\n", u)

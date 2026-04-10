@@ -92,13 +92,43 @@ type InputBlock struct {
 	Params map[string]any `json:"params"`
 }
 
+// TaskError holds the error field from a task response.
+// The API returns either a plain string or an object like
+// {"code": 123, "error_message": "..."}.
+type TaskError struct {
+	Message string
+}
+
+func (e *TaskError) UnmarshalJSON(b []byte) error {
+	// plain string
+	var s string
+	if json.Unmarshal(b, &s) == nil {
+		e.Message = s
+		return nil
+	}
+	// object
+	var obj struct {
+		Message      string `json:"message"`
+		ErrorMessage string `json:"error_message"`
+	}
+	if err := json.Unmarshal(b, &obj); err != nil {
+		return err
+	}
+	if obj.ErrorMessage != "" {
+		e.Message = obj.ErrorMessage
+	} else {
+		e.Message = obj.Message
+	}
+	return nil
+}
+
 // TaskStatus mirrors the gateway's task response.
 type TaskStatus struct {
 	ID        string        `json:"id"`
 	Status    string        `json:"status"` // in_progress | completed | failed
 	Model     string        `json:"model"`
 	Output    []OutputGroup `json:"output,omitempty"`
-	Error     *string       `json:"error,omitempty"`
+	Error     *TaskError    `json:"error,omitempty"`
 	CreatedAt int64         `json:"created_at"`
 	Progress  float64       `json:"progress,omitempty"`
 	Usage     *UsageInfo    `json:"usage,omitempty"`
@@ -137,8 +167,8 @@ func (c *Client) Submit(endpoint, modelID string, params map[string]any) (*TaskS
 		return nil, err
 	}
 	if resp.ID == "" {
-		if resp.Error != nil && *resp.Error != "" {
-			return nil, fmt.Errorf("%s", *resp.Error)
+		if resp.Error != nil && resp.Error.Message != "" {
+			return nil, fmt.Errorf("%s", resp.Error.Message)
 		}
 		return nil, fmt.Errorf("task creation failed: no id in response")
 	}
@@ -152,6 +182,17 @@ func (c *Client) PollTask(generationEndpoint, taskID string, pollInterval, timeo
 	for time.Now().Before(deadline) {
 		var status TaskStatus
 		if err := c.do(http.MethodGet, taskEndpoint, nil, &status); err != nil {
+			// If the status field shows a terminal state via a minimal parse, stop.
+			if status.Status == "failed" || status.Status == "completed" {
+				if status.Status == "failed" {
+					reason := "unknown error"
+					if status.Error != nil && status.Error.Message != "" {
+						reason = status.Error.Message
+					}
+					return &status, fmt.Errorf("%s", reason)
+				}
+				return &status, nil
+			}
 			time.Sleep(pollInterval)
 			continue
 		}
@@ -165,8 +206,8 @@ func (c *Client) PollTask(generationEndpoint, taskID string, pollInterval, timeo
 			return &status, nil
 		case "failed":
 			reason := "unknown error"
-			if status.Error != nil && *status.Error != "" {
-				reason = *status.Error
+			if status.Error != nil && status.Error.Message != "" {
+				reason = status.Error.Message
 			}
 			return &status, fmt.Errorf("%s", reason)
 		}

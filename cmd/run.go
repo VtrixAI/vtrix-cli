@@ -102,7 +102,7 @@ Exit codes:
 			if task != nil && task.Status == "failed" {
 				errMsg := "unknown error"
 				if task.Error != nil {
-					errMsg = *task.Error
+					errMsg = task.Error.Message
 				}
 				return clierrors.ErrTaskFailed(resp.ID, errMsg)
 			}
@@ -112,7 +112,7 @@ Exit codes:
 		if task.Status == "failed" {
 			errMsg := "unknown error"
 			if task.Error != nil {
-				errMsg = *task.Error
+				errMsg = task.Error.Message
 			}
 			return clierrors.ErrTaskFailed(resp.ID, errMsg)
 		}
