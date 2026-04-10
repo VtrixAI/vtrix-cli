@@ -11,7 +11,7 @@ DIST="dist"
 VTRIX_BASE_URL="${VTRIX_BASE_URL:-https://vtrix.ai}"
 VTRIX_MODELS_URL="${VTRIX_MODELS_URL:-https://seacloud-cloud-model-spec.api.seaart.ai}"
 VTRIX_GENERATION_URL="${VTRIX_GENERATION_URL:-$VTRIX_BASE_URL}"
-VTRIX_SKILLHUB_URL="${VTRIX_SKILLHUB_URL:-https://seacloud-skill-hub.api.seaart.ai/api/v1}"
+VTRIX_SKILLHUB_URL="${VTRIX_SKILLHUB_URL:-https://skill-hub.vtrix.ai/api/v1}"
 
 LDFLAGS="-s -w \
   -X github.com/VtrixAI/vtrix-cli/internal/buildinfo.Version=${VERSION} \
