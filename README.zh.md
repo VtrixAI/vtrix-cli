@@ -18,6 +18,8 @@
   </p>
   <p>
     <a href="./README.md">English</a>
+    ·
+    <a href="https://vtrix.ai/">Vtrix官网</a>
   </p>
 </div>
 
